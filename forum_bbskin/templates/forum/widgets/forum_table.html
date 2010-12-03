@@ -1,0 +1,53 @@
+<tr>
+  
+  <th>Forum</th>
+
+  <th>Topics</th>
+  <th>Posts</th>
+  <th>&nbsp;&nbsp;Latest Post</th>
+</tr>
+
+{% for forum in forums %}
+<tr>
+  <td class="djangoForumListDetails">
+    <p><strong>
+	<a href="{{ forum.get_absolute_url }}">{{ forum.title }}</a>
+    </strong></p>
+
+    <p>{{ forum.description }}</p>
+  </td>
+
+  <td class="djangoForumListLastPost">
+    {{forum.threads}}
+  </td>
+
+  <td>
+    {{forum.posts}}
+  </td>
+
+  {% with forum.forum_latest_post as latest_post %}
+  <td class="djangoForumListLastPost">
+
+    {% if latest_post %}
+    <p>
+      <a href="{{ latest_post.get_absolute_url }}">
+	{{latest_post.thread.title}}
+      </a>
+    </p>
+    
+    <p>{{latest_post.time|date}} {{latest_post.time|time }}</p>
+
+    {% else %}
+
+    No Posts
+
+    {% endif %}
+
+  </td>
+
+  {% endwith %}
+
+</tr>
+
+{% endfor %}
+

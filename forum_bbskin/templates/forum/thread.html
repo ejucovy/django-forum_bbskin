@@ -1,0 +1,233 @@
+{% load i18n %}
+<html>
+  <head>
+    <title>{{ thread.title|escape }} ({{ forum.title }})</title>
+    <style media="screen" type="text/css">
+      @import "/site_media/css/forum.css" ;
+    </style>
+  </head>
+  <body>
+    <h2>
+      <a href="../../">Forum</a>:
+      <a href="{{forum.get_absolute_url}}">{{forum.title}}</a> 
+      &raquo; Topic: {{thread.title}}
+    </h2>
+    
+    <br/>
+    <div style="padding-left: 5%;">
+      
+      {% if is_paginated %}
+      <ul>
+	<li class="djangoForumPagination"><a href="?page=1">{% trans "First" %}</a></li>
+	{% for page_number in paginator.page_range %}
+	<li class="djangoForumPagination"><a href="?page={{ page_number }}">{{ page_number }}</a></li>  
+	{% endfor %}
+	<li class="djangoForumPagination"><a href="?page={{ paginator.num_pages }}">{% trans "Last" %}</a></li>  
+      </ul>
+      {% endif %}
+
+      {% with "True" as less_verbose %}
+      {% with "display: inline; padding-right: 2em;" as form_style %}
+      {% include 'forum/widgets/subscribe.html' %}
+      {% endwith %}
+      {% endwith %}
+
+      <form method="GET" style="display: inline;"
+	    action="{% url forum_subscriptions %}">
+	<input type="submit" value="Manage subscriptions" />
+      </form>
+      
+      <span style="padding-left: 54em;">&nbsp;</span>
+      
+      <form method="GET" style="display: inline;"
+	    action="/profile">
+	<input type="submit" value="Edit your posts" />
+      </form>
+      
+    </div>
+    
+    <br/>
+    
+    {% with post_list.count as post_count %}
+    <div style="border: 3px solid #417690; margin-left: 5%; width: 90%;">
+      <table id='djangoForumThreadPosts' style="width: 100%">
+	{% for post in post_list %}
+	
+	{% load forum_extensions %}
+	
+	<tr>
+	  <th colspan="2" style="text-align: right;" class="meta">
+	    {{ post.time|date}} {{post.time|time}}
+	    &mdash;
+	      {% if request.GET.page %}
+	      
+	      {% ifequal request.GET.page "last" %}
+	      
+	      {% with paginator.num_pages as page %}
+	    <a href="#post{{post.pk}}">
+	      #{{forloop.counter|pagewise:page}}</a> of {{total_posts}}
+            {% endwith %}
+	    
+	    {% else %}
+	    
+	    {% with request.GET.page as page %}
+	    <a href="#post{{post.pk}}">
+	      #{{forloop.counter|pagewise:page}}</a> of {{total_posts}}
+	    {% endwith %}
+	    
+	    {% endifequal %}
+	    
+            {% else %}
+	    
+	    <a href="#post{{post.pk}}">
+	      #{{forloop.counter}}</a> of {{total_posts}}
+	    
+            {% endif %}
+	    
+	    
+	  </th>
+	</tr>
+	
+	<tr>
+	  <th class='djangoForumThreadPostDetail' id='post{{ post.id }}'
+	      style="background-color: #eee; color: black;
+	             border: none;"
+	      >
+	    
+	    {% with post.author as author %}
+	    {% include 'forum/widgets/user_microprofile.html' %}
+	    {% endwith %}
+	    
+	  </th>
+	  
+	  <td id="post-{{post.pk}}"
+	      style="border: none;">
+	    {{ post.body }}
+	    <div style="display: none;" class="rawcontents">
+	      {{post.body}}
+	    </div>
+	    
+	  </td>
+	</tr>
+	
+	<tr>
+	  <td colspan="2"
+	      style="text-align: right; background-color: #eee; 
+		     border: none; border-bottom: 3px solid #888;">
+	    <a href="#reply" href_to="#post-{{post.pk}}">Reply</a>
+	    |
+	    <a href="#reply" href_to="#post-{{post.pk}}" class="quote-post">Quote &amp; reply</a>
+	  </td>
+	</tr>
+	
+	{% endfor %}
+	
+      </table>
+    </div>
+    
+    {% endwith %}
+    
+    <br/>
+    <div style="padding-left: 5%;">
+      
+      {% if is_paginated %}
+      <ul>
+	<li class="djangoForumPagination"><a href="?page=1">{% trans "First" %}</a></li>
+	{% for page_number in paginator.page_range %}
+	<li class="djangoForumPagination"><a href="?page={{ page_number }}">{{ page_number }}</a></li>  
+	{% endfor %}
+	<li class="djangoForumPagination"><a href="?page={{ paginator.num_pages }}">{% trans "Last" %}</a></li>  
+      </ul>
+      {% endif %}
+      
+      {% with "True" as less_verbose %}
+      {% with "display: inline; padding-right: 2em;" as form_style %}
+      {% include 'forum/widgets/subscribe.html' %}
+      {% endwith %}
+      {% endwith %}
+      
+      <form method="GET" style="display: inline;"
+	    action="{% url forum_subscriptions %}">
+	<input type="submit" value="Manage subscriptions" />
+      </form>
+      
+      <span style="padding-left: 54em;">&nbsp;</span>
+      
+      <form method="GET" style="display: inline;"
+	    action="/profile">
+	<input type="submit" value="Edit your posts" />
+      </form>
+      
+      
+    </div>
+    <br/>
+    
+    <br/>
+    
+    <div style="padding-left: 5%; padding-right: 5%;">
+      
+      {% if user.is_authenticated %}
+      
+      <h2>Post a Reply</h2>
+      {% if thread.closed %}
+      <p>Sorry, this thread is closed. No further replies are permitted.</p>
+      {% else %}
+      <form name="reply" id="reply" method='post' action='reply/'>
+	<p>Posting as: {{ user.username }}</p>
+	
+	<!--
+	   <script type="text/javascript">
+	     edToolbar('id_body');
+	   </script>
+	   -->
+	
+	{{ form.as_p }}
+	<input type='submit' value='Submit' />
+      </form>
+      {% endif %}
+      
+      {% else %}
+      <h2>Post a Reply</h2>
+      {% if thread.closed %}
+      <p>Sorry, this thread is closed. No further replies are permitted.</p>
+      {% else %}
+      <p>Please login to post a reply.</p>
+      {% endif %}
+      {% endif %}
+    </div>
+    
+    <!--
+       <script type="text/javascript">
+	 jQuery(document).ready(function () {
+	 jQuery("a.quote-post").click(function () {
+	 var post_href = jQuery(this).attr('href_to');
+	 
+	 var post = '#' + post_href.split('#')[1];
+	 var postRow = jQuery(post).parent();
+	 var postText = jQuery(post + " .rawcontents").text();
+	 
+	 var author = jQuery(postRow).find("th p.author a").text();
+	 
+	 var url = jQuery(this).siblings("a").attr('href');
+	 
+	 {% ifequal request.GET.page "last" %}
+	 var qs = "?page=" + {{paginator.num_pages}};
+	 {% else %}
+	 var qs = window.location.search;
+	 {% endifequal %}
+	 var header = "Replying to " + author.replace(/^\s+|\s+$/g,"") + " (" + '{{thread.get_absolute_url}}' + qs + post_href + ")";
+	 var quote = postText.replace(/^\s+|\s+$/g,"");
+	 quote = quote.replace(/\n/g, "\n> ");
+	 quote = "> " + quote;
+	 
+	 jQuery("textarea#id_body")[0].value = header + "\n" + quote + "\n\n";
+	 jQuery("textarea#id_body").focus();
+	 
+	 return true;
+	 });
+	 });
+       </script>
+       -->
+  </body>
+</html>
+

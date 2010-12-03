@@ -1,0 +1,24 @@
+{% if request.user.is_authenticated %}
+    <form method="POST" action="{% url forum_subscribe_thread thread.pk %}"
+	  style="{{form_style}}">
+
+      {% if not less_verbose %}
+        {% if subscription %}
+        You are currently subscribed to this topic.
+        {% else %}
+        You are not currently subscribed to this topic.
+        {% endif %}
+      {% endif %}
+
+      {% if two_lines %}
+      <br/>
+      {% endif %}
+
+      {% if subscription %}
+      <input type="submit" name="action" value="Unsubscribe"/>
+      {% else %}
+      <input type="submit" name="action" value="Subscribe"/>
+      {% endif %}
+      
+    </form>
+{% endif %}

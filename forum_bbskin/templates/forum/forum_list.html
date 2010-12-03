@@ -1,0 +1,47 @@
+{% load i18n %}
+
+<html>
+  <head>
+    <title>{% trans "Forums" %}</title>
+    <style media="screen" type="text/css">
+      @import "/site_media/css/forum.css" ;
+    </style>
+  </head>
+
+  <body>
+
+    <h2>Categories</h2>
+    <ul>
+      
+      {% load forum_extensions %}
+      {% get_forum_categories as forum_categories %}
+      
+      {% for category in forum_categories %}
+      <li>
+	<a href="{% url forums-in-category category.pk %}">{{category.name}}</a>
+	{% endfor %}
+    </ul>
+    
+    <h2>Forums</h2>
+    <br/>
+    <div style="border: 3px solid #417690; margin-left: 5%; margin-right: 5%;">
+      <table id='djangoForumList'>
+	{% with object_list as forums %}
+	{% include 'forum/widgets/forum_table.html' %}
+	{% endwith %}
+      </table>
+    </div>
+    
+    {% if request.user.is_authenticated %}
+    <br/>
+    <div style="margin-left: 5%;">
+      <form method="GET" style="display: inline;"
+	    action="{% url forum_subscriptions %}">
+	<input type="submit" value="Manage subscriptions" />
+      </form>
+    </div>
+    <br/>
+    {% endif %}
+
+  </body>
+</html>

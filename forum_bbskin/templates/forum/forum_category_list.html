@@ -1,0 +1,28 @@
+{% extends "base.html" %}{% load i18n %}
+
+{% block title %}{% trans "Forums" %}{% endblock %}
+
+{% block masthead %}{% trans "Forums" %}{% endblock %}
+
+{% block css %}
+  <style media="screen" type="text/css">
+    @import "/site_media/css/forum.css" ;
+  </style>
+{% endblock %}
+
+{% block nav %}
+<li><a href='{% url forum_index %}'>Forums</a></li>
+{% endblock %}
+
+{% block content %}
+
+<h2>{{category.name}}</h2>
+
+<table class="category" id="djangoForumList">
+{% with category.forums.all as forums %}
+  {% include 'forum/widgets/forum_table.html' %}
+{% endwith %}
+</table>
+
+{% if request.user.is_authenticated %}<p><a href="{% url forum_subscriptions %}">{% trans "Update Subscriptions" %}</a></p>{% endif %}
+{% endblock %}

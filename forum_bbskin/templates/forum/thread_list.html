@@ -1,0 +1,230 @@
+{% load i18n %}
+<html>
+  <head>
+    <title>{{ forum.title }}</title>
+    <style media="screen" type="text/css">
+      @import "/site_media/css/forum.css" ;
+    </style>
+    <link rel="alternate" type="application/rss+xml" 
+	  title="{% blocktrans with forum.title as ftitle %}{{ ftitle }} Posts via RSS{% endblocktrans %}" 
+	  href="{% url forum_index %}rss/{{ forum.slug }}/" />
+    <link rel="alternate" type="application/atom+xml"
+	  title="{% blocktrans with forum.title as ftitle %}{{ ftitle }} Posts via ATOM{% endblocktrans %}"
+	  href="{% url forum_index %}atom/{{ forum.slug }}/" />
+  </head>
+  <body>
+
+    <h1>
+      <a href="../">Forum: {{forum.title}}</a>
+      &raquo; Topics
+    </h1>
+
+    <br/>
+    
+    <div style="padding-left: 5%;">
+      
+      {% if is_paginated %}
+      <ul>
+	<li class="djangoForumPagination"><a href="?page=1">{% trans "First" %}</a></li>
+	{% for page_number in paginator.page_range %}
+	<li class="djangoForumPagination"><a href="?page={{ page_number }}">{{ page_number }}</a></li>  
+	{% endfor %}
+	<li class="djangoForumPagination"><a href="?page={{ paginator.num_pages }}">{% trans "Last" %}</a></li>  
+      </ul>
+      {% endif %}
+      
+      {% if user.is_authenticated %}
+      
+      <form method="GET" style="display: inline;"
+	    action="{% url forum_new_thread forum.slug %}">
+	<input type="submit" value="New topic"/>
+      </form>
+      
+      <span style="padding-left: 47em;">&nbsp;</span>
+      
+      <form method="POST" action="{% url forum_subscribe_bulk forum.slug %}"
+	    style="display: inline;"
+	    >
+	<input type="hidden" name="action" value="Subscribe" />
+	<input type="submit" value="Subscribe all" />
+      </form>
+      
+      <form method="POST" action="{% url forum_subscribe_bulk forum.slug %}"
+	    style="display: inline;"
+	    >
+	<input type="hidden" name="action" value="Unsubscribe" />
+	<input type="submit" value="Unsubscribe all" />
+      </form>
+      
+      <form method="GET" style="display: inline;"
+	    action="{% url forum_subscriptions %}">
+	<input type="submit" value="Manage subscriptions" />
+      </form>
+      {% else %}
+      <p>Please login to start a new topic.</p>
+      {% endif %}
+    </div>
+    
+    <br/>
+    
+    {% if child_forums %}
+    <table id='djangoForumList'>
+      <tr>
+	<th>{% trans "Sub-Forum" %}</th>
+	<th>{% trans "Last Post" %}</th>
+      </tr>
+      
+      {% for subforum in child_forums %}
+      <tr>
+	<td class='djangoForumListDetails'><p><strong><a href='{{ subforum.get_absolute_url }}'>{{ subforum.title }}</a></strong><br /><span class='djangoForumStats'>{{ subforum.threads }} {% trans "thread" %}{{ subforum.threads|pluralize }}, {{ subforum.posts }} {% trans "post" %}{{ subforum.posts|pluralize }}</span></p>
+	  <p>{{ subforum.description }}</p></td>
+	{% with subforum.forum_latest_post as latest_post %}
+	{% with latest_post.author as user %}
+	<td class='djangoForumListLastPost'>{% if latest_post %}{{ post.time|timesince }} ago by {% include 'forum/widgets/username.html' %} (<a href='{{ latest_post.get_absolute_url }}'>{% trans "view" %}</a>){% else %}{% trans "No Posts" %}{% endif %}</td>
+	{% endwith %}
+	{% endwith %}
+      </tr>
+      {% endfor %}
+    </table>
+    <br />
+    {% endif %}
+    
+    {% load forum_extensions %}
+    
+    <div class="djangoForumThreadWrapper">
+      
+      {% for t in thread_list %}
+      
+      {% if request.GET.page %}
+      
+      {% ifequal request.GET.page "last" %}
+      {% with paginator.num_pages as page %}
+      {% ifequal forloop.counter0|pagewise:page stickies %}
+      <div class="paging">&nbsp;</div>
+      {% endifequal %}
+      {% endwith %}
+      
+      {% else %}
+      {% with request.GET.page as page %}
+      {% ifequal forloop.counter0|pagewise:page stickies %}
+      <div class="paging">&nbsp;</div>
+      {% endifequal %}
+      {% endwith %}
+      
+      {% endifequal %}
+      
+      {% else %}
+      
+      {% ifequal forloop.counter0 stickies %}
+      <div class="paging">&nbsp;</div>
+      {% endifequal %}
+      
+      {% endif %}
+      
+      <table class='djangoForumThreadList'>
+	
+	<tr>
+	  <th style="width: 70%;">
+	    {% if t.sticky %}Sticky: {% endif %}
+	    <a href="{{t.get_absolute_url}}">{{t.title|escape}}</a>
+	    {% if t.closed %} (Closed){% endif %}
+	  </th>
+	  
+	  <th style="width: 5%;">Posts</th>
+	  <th style="width: 5%;">Views</th>
+	  {% if forloop.first %}
+	  <th style="width: 20%;">&nbsp;&nbsp;&nbsp;Latest post</th>
+	  {% else %}
+	  <th style="Width: 20%;"></th>
+	  {% endif %}
+	  
+	</tr>
+	
+	<tr>
+	  
+	  <td span="0.5">
+	    {% load helpful_tags %}
+	    <p>
+	      <div style="font-size: 0.8em;" >
+		
+		{% with t.first_post as first_post %}
+		{% with first_post.author as user %}
+		<a href="/forum/thread/{{t.pk}}/?page=1#post{{first_post.pk}}"
+		   >
+		  First post</a> by {% include 'forum/widgets/username.html' %}
+		» {{first_post.time|date:"D M d, Y"}} {{first_post.time|time}}
+		{% endwith %}
+		{% endwith %}
+		
+	      </div>
+	    </p>
+	  </td>
+	  
+	  
+	  
+	  <td class='djangoForumThreadLastPost'
+	      style='width: 50px;'>{{ t.posts }}</td>
+	  <td style='width: 50px;'>{{ t.views }}</td>
+	  {% with t.thread_latest_post as latest_post %}
+	  {% with latest_post.author as user %}
+	  <td style='width: 220px; font-size: 0.8em;' class='djangoForumThreadLastPost'>
+	    <p>
+	      <a href='{{ latest_post.get_absolute_url }}'>latest post by {{user.username}}</a>
+	    </p>
+	    <p>{{latest_post.time|date:"D M d, Y"}} {{latest_post.time|time}}</p>
+	    
+	  </td>
+	  {% endwith %}
+	  {% endwith %}
+	</tr>
+	
+      </table>
+      
+      {% endfor %}
+    </div>
+    
+    <br/>
+    <div style="padding-left: 5%;">
+      {% if is_paginated %}
+      <ul>
+	<li class="djangoForumPagination"><a href="?page=1">{% trans "First" %}</a></li>
+	{% for page_number in paginator.page_range %}
+	<li class="djangoForumPagination"><a href="?page={{ page_number }}">{{ page_number }}</a></li>  
+	{% endfor %}
+	<li class="djangoForumPagination"><a href="?page={{ paginator.num_pages }}">{% trans "Last" %}</a></li>  
+      </ul>
+      {% endif %}
+      
+      {% if user.is_authenticated %}
+      <form method="GET" style="display: inline;"
+	    action="{% url forum_new_thread forum.slug %}">
+	<input type="submit" value="New topic"/>
+      </form>
+      
+      <span style="padding-left: 47em;">&nbsp;</span>
+      <form method="POST" action="{% url forum_subscribe_bulk forum.slug %}"
+	    style="display: inline;"
+	    >
+	<input type="hidden" name="action" value="Subscribe" />
+	<input type="submit" value="Subscribe all" />
+      </form>
+      
+      <form method="POST" action="{% url forum_subscribe_bulk forum.slug %}"
+	    style="display: inline;"
+	    >
+	<input type="hidden" name="action" value="Unsubscribe" />
+	<input type="submit" value="Unsubscribe all" />
+      </form>
+      
+      <form method="GET" style="display: inline;"
+	    action="{% url forum_subscriptions %}">
+	<input type="submit" value="Manage subscriptions" />
+      </form>
+      
+      {% else %}
+      <p>Please login to start a new topic.</p>
+      {% endif %}
+    </div>
+    <br/>
+  </body>
+</html>

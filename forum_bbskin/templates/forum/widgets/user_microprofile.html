@@ -1,0 +1,19 @@
+<p class="author">
+  {% with author as user %}
+    {% include 'forum/widgets/username.html' %}
+  {% endwith %}
+
+    <br/>  <br/>
+    {% comment %}
+    {% with author.get_profile as profile %}
+    {% if profile.city and profile.state %}
+    {{profile.city}}, {{profile.state}}
+    {% else %}{% if profile.state %}
+    {{profile.state}}{% endif %}
+    {% endif %}
+    {% endwith %}
+    {% endcomment %}
+  <br/>
+      
+  Posts: {{author.forum_post_set.count}}
+</p>
